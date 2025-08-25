@@ -83,7 +83,7 @@ public struct RecapScreen<LeadingView: View, TrailingView: View>: View {
             })
             .frame(maxWidth: .infinity)
             .background(self.dismissButtonStyle.backgroundStyle)
-            .clipShape(.rect(cornerRadius: 16.0))
+            .versionSpecificClipShape()
             .padding(.horizontal, 40.0)
             .foregroundStyle(.primary)
             .withBottomPaddingIfNoSafeArea()
@@ -172,6 +172,15 @@ private extension RecapScreen {
 // MARK: Safe Area Insets
 
 private extension View {
+	@ViewBuilder
+	func versionSpecificClipShape() -> some View {
+		if #available(iOS 26.0, *) {
+			self.clipShape(.capsule)
+		} else {
+			self.clipShape(.rect(cornerRadius: 16.0))
+		}
+	}
+
     var hasSafeAreaForBottomPadding: Bool {
 #if os(macOS)
         return false
