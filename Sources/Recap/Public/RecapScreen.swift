@@ -159,7 +159,6 @@ private extension RecapScreen {
 #endif
     }
 
-
     func tabIndex(from startIndex: RecapScreenStartIndex) -> Int {
         switch startIndex {
         case .leadingView: 0

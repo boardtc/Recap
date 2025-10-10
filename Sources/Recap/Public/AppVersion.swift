@@ -29,6 +29,12 @@ public extension AppVersion {
     }
 }
 
+public extension AppVersion {
+	var semanticVersion: SemanticVersion {
+		SemanticVersion(version: self.string)
+	}
+}
+
 internal extension AppVersion.Change {
     init(_ string: String) {
         switch string.lowercased() {
