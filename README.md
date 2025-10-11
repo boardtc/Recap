@@ -148,32 +148,57 @@ RecapScreen(
 
 In my app [Plinky](https://plinky.app), I use the leading view to display the app's upcoming roadmap ahead of the most recent features, and the trailing view displays a support screen for people to reach out to me after browsing the feature list.
 
-### Semantic Versioning
+### Display Policies
 
-Recap includes a `SemanticVersion` type, to help determine when to display the What's New Screen. Here's an example of how to use it:
+`RecapDisplayPolicy` and `RecapDisplayPolicy.Trigger` provide a handy way to define when your Recap screen should display. It encapsulates the most common strategies people choose for displaying a What's New screen, for example "when there's a new version that has release notes" or "if there are any release notes since the last version the user launched". It achieves this with a composable fluent syntax, and the rest is handled for you.
 
-Recap bundles a useful utility for choosing when to display the What's New Screen. You can use `SemanticVersion` to compare your app's current version to the last launched version, to decide if you should show the What's New Screen. I recommend tailoring the logic to your needs, but this is a basic example of how it can be used.
+Below is a simplified example of how you can present a Recap screen. In this case we will display our screen when there are release notes for any version since the last launch, and the update is notable (major/minor).
 
 ```swift
-var shouldDisplayRecapScreen: Bool {
-    let currentVersionString = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
-    let previousVersionString = "1.0.0" // You should decide the best way to store the user's last launched version number, UserDefaults is a useful option.
+func presentRecapScreen() {
+    let currentVersion = (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String) ?? "0"
+    let previousVersion = UserDefaults.standard.string(forKey: "previouslyLaunchedVersion")
 
-    guard let currentVersionString else { return false }
-    guard let previousVersionString else { return false }
+    // Versions of your app that have release notes
+    let releaseVersions: [SemanticVersion] = [Release].appReleases.map(\.version.semanticVersion)
 
-    let currentVersion = SemanticVersion(version: currentVersionString)
-    let previousVersion = SemanticVersion(version: previousVersionString)
+	// Create a RecapDisplayPolicy based on the app's current version, the previously launched version, and your release notes.
+    let policy = RecapDisplayPolicy(
+        currentVersion: SemanticVersion(version: currentVersion),
+        previousVersion: previousVersion.map(SemanticVersion.init(version:)),
+        releases: releaseVersions
+    )
 
-    // Show screen if major or minor version has increased
-    return currentVersion.major > previousVersion.major || currentVersion.minor > previousVersion.minor
+	// A Trigger that shows the release notes for notable versions 
+	// for a user who hasn't seen opened the app since the last version with release notes. 
+    let trigger = RecapDisplayPolicy.Trigger
+        .updateWindow(.sincePrevious)
+        .notability(.notableOnly)
+
+	// An alternative example trigger that always shows release notes for any new version.
+    // let trigger = RecapDisplayPolicy.Trigger
+    //     .updateWindow(.current)
+    //     .notability(.any)
+    //     .ignoringReleaseNotesRequirement()
+
+    if policy.shouldTrigger(using: trigger) {
+		// Present a RecapScreen in your app in a contextually relevant manner. 
+		let recapScreen = RecapScreen(releases: .appReleases)
+        self.router.present(recapScreen)
+    }
+
+    // Persist version state for next launch
+    UserDefaults.standard.set(currentVersion, forKey: "previouslyLaunchedVersion")
 }
 ```
 
-This logic displays the RecapScreen when:
-- Upgrading from 1.0.0 to 1.1.0
-- Upgrading from 1.0.0 to 2.0.0
-- But not when upgrading from 1.0.0 to 1.0.1
+### Semantic Versioning
+
+Recap includes a `SemanticVersion` type to represent and compare versions using the standard `major.minor.patch` scheme. It powers the display policy described below and can be used directly anywhere version comparisons are needed.
+
+Examples:
+- `SemanticVersion(version: "1.2.3")`
+- Compare with `==`, `<`, `>` to implement custom logic
 
 ### Demo
 
