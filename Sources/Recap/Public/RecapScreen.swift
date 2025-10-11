@@ -81,8 +81,8 @@ public struct RecapScreen<LeadingView: View, TrailingView: View>: View {
                 }
                 .contentShape(.rect(cornerRadius: 16.0))
             })
+			.buttonStyle(.borderless)
             .frame(maxWidth: .infinity)
-            .buttonStyle(.borderless)
             .background(self.dismissButtonStyle.backgroundStyle)
             .versionSpecificClipShape()
             .padding(.horizontal, 40.0)
