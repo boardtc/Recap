@@ -2,7 +2,7 @@ import Foundation
 
 /// Determines whether to display a "What's New" banner based on
 /// current/previous app versions and available release-note versions.
-public struct ReleaseNotesDisplayPolicy {
+public struct RecapDisplayPolicy {
     private let currentVersion: SemanticVersion
     private let previousVersion: SemanticVersion?
     private let releaseVersions: [SemanticVersion]
@@ -63,7 +63,7 @@ public struct ReleaseNotesDisplayPolicy {
 
 // MARK: Private
 
-private extension ReleaseNotesDisplayPolicy {
+private extension RecapDisplayPolicy {
     func hasReleaseNotes(from previous: SemanticVersion?, to current: SemanticVersion) -> Bool {
         let versions = self.releaseVersions
 
@@ -76,3 +76,4 @@ private extension ReleaseNotesDisplayPolicy {
         }
     }
 }
+

@@ -1,4 +1,4 @@
-public extension ReleaseNotesDisplayPolicy {
+public extension RecapDisplayPolicy {
     /// A fluent, composable description of when to surface release notes
     /// given the current and previous app versions and the available
     /// release-note versions.
@@ -11,7 +11,7 @@ public extension ReleaseNotesDisplayPolicy {
     /// 3) A notes requirement (require release notes to be present in the
     ///    selected window, or ignore notes entirely).
     ///
-    /// Evaluate with `ReleaseNotesDisplayPolicy.shouldTrigger(using:)`.
+    /// Evaluate with `RecapDisplayPolicy.shouldTrigger(using:)`.
     ///
     /// Examples:
     /// - Only if current version has notes (default behavior requires notes):
@@ -51,9 +51,9 @@ public extension ReleaseNotesDisplayPolicy {
 	}
 }
 
-// MARK: ReleaseNotesDisplayPolicy.UpdateWindow, ReleaseNotesDisplayPolicy.UpdateNotability, ReleaseNotesDisplayPolicy.NotesRequirement
+// MARK: RecapDisplayPolicy.UpdateWindow, RecapDisplayPolicy.UpdateNotability, RecapDisplayPolicy.NotesRequirement
 
-public extension ReleaseNotesDisplayPolicy {
+public extension RecapDisplayPolicy {
 	/// Defines the version range in which to evaluate release notes.
 	///
 	/// - current: Only the current app version must have release notes.
@@ -81,3 +81,4 @@ public extension ReleaseNotesDisplayPolicy {
 		case ignore
 	}
 }
+
