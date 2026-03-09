@@ -10,6 +10,26 @@
           }
         }
       }
+    },
+    "RECAP.SCREEN.PAGINATION.BUTTON.NEXT" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next"
+          }
+        }
+      }
+    },
+    "RECAP.SCREEN.PAGINATION.BUTTON.PREVIOUS" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Previous"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

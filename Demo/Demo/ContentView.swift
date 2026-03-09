@@ -2,6 +2,7 @@ import Recap
 import SwiftUI
 
 struct ContentView: View {
+    @Environment(\.openWindow) private var openWindow
     @State private var isPresentingRecapScreen = false
 
     var body: some View {
