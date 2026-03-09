@@ -38,6 +38,11 @@ public extension View {
         self.environment(\.recapScreenDismissButtonTitle, title)
     }
 
+    /// Configures whether the `RecapScreen` dismiss button is shown.
+    func recapScreenDismissButtonVisibility(_ visibility: RecapScreenDismissButtonVisibility) -> some View {
+        self.environment(\.recapScreenDismissButtonVisibility, visibility)
+    }
+
     /// Configures an `IconFillMode` for the icons displayed on the `RecapScreen`.
     func recapScreenIconFillMode(_ style: IconFillMode) -> some View {
         self.environment(\.recapScreenIconFillMode, style)
@@ -52,6 +57,11 @@ public extension View {
     func recapScreenPageIndicatorColors(selected: Color, deselected: Color) -> some View {
         self.environment(\.recapScreenSelectedPageIndicatorColor, selected)
             .environment(\.recapScreenDeselectedPageIndicatorColor, deselected)
+    }
+
+    /// Configures how pagination controls are displayed on the `RecapScreen`.
+    func recapScreenPaginationStyle(_ style: RecapScreenPaginationStyle) -> some View {
+        self.environment(\.recapScreenPaginationStyle, style)
     }
 
     /// Configures a background `ShapeStyle` for the `RecapScreen`.
@@ -144,6 +154,17 @@ internal extension EnvironmentValues {
         )
     }
 
+    // MARK: DismissButtonVisibility
+
+    var recapScreenDismissButtonVisibility: RecapScreenDismissButtonVisibility {
+        get { self[DismissButtonVisibilityKey.self] }
+        set { self[DismissButtonVisibilityKey.self] = newValue }
+    }
+
+    private struct DismissButtonVisibilityKey: EnvironmentKey {
+        static let defaultValue = RecapScreenDismissButtonVisibility.visible
+    }
+
     // MARK: DismissAction
 
     var recapScreenDismissAction: RecapScreenDismissAction? {
@@ -175,6 +196,17 @@ internal extension EnvironmentValues {
 
     private struct DeselectedPageIndicatorColorKey: EnvironmentKey {
         static let defaultValue = Color.gray
+    }
+
+    // MARK: PaginationStyle
+
+    var recapScreenPaginationStyle: RecapScreenPaginationStyle {
+        get { self[PaginationStyleKey.self] }
+        set { self[PaginationStyleKey.self] = newValue }
+    }
+
+    private struct PaginationStyleKey: EnvironmentKey {
+        static let defaultValue = RecapScreenPaginationStyle.default
     }
 
     // MARK: IconFillMode

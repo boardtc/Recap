@@ -107,9 +107,11 @@ func recapScreenTitleStyle(_ style: some ShapeStyle) -> some View
 func recapScreenDismissButtonStyle(_ style: some ShapeStyle) -> some View
 func recapScreenDismissButtonStyle(_ backgroundStyle: some ShapeStyle, _ foregroundStyle: some ShapeStyle) -> some View
 func recapScreenDismissButtonTitle(_ title: LocalizedStringResource) -> some View
+func recapScreenDismissButtonVisibility(_ visibility: RecapScreenDismissButtonVisibility) -> some View
 func recapScreenIconFillMode(_ style: IconFillMode) -> some View
 func recapScreenIconAlignment(_ alignment: VerticalAlignment) -> some View
 func recapScreenPageIndicatorColors(selected: Color, deselected: Color) -> some View
+func recapScreenPaginationStyle(_ style: RecapScreenPaginationStyle) -> some View
 func recapScreenBackground(_ style: AnyShapeStyle?) -> some View
 func recapScreenBackground(_ color: Color) -> some View
 func recapScreenPadding(_ insets: EdgeInsets) -> some View
@@ -124,7 +126,9 @@ Example usage:
 RecapScreen(releases: .appReleases)
     .recapScreenTitleStyle(LinearGradient(colors: [.purple, .pink, .orange, .yellow], startPoint: .topLeading, endPoint: .bottomTrailing))
     .recapScreenDismissButtonStyle(Color.pink, Color.white)
+    .recapScreenDismissButtonVisibility(.hidden)
     .recapScreenIconFillMode(.gradient)
+    .recapScreenPaginationStyle(.buttons)
     .recapScreenPageIndicatorColors(
         selected: Color.pink,
         deselected: Color.gray
