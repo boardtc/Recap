@@ -61,7 +61,7 @@ public struct RecapScreen<LeadingView: View, TrailingView: View>: View {
                 self.trailingView
                     .tag(self.tabIndex(from: .trailingView))
             }
-            .tabViewStyle(.page(indexDisplayMode: self.usesDefaultPaginationControls ? .always : .never))
+            .tabViewStyle(.page(indexDisplayMode: self.usesSystemPaginationControls ? .always : .never))
             .background(self.derivedBackgroundStyle)
 
             if self.showsFooter {
@@ -118,28 +118,20 @@ public extension RecapScreen where LeadingView == EmptyView, TrailingView == Emp
 
 private extension RecapScreen {
 	var paginationControls: some View {
-		HStack(spacing: 16.0) {
-			self.paginationButton(
-				title: LocalizedStringResource(
-					"RECAP.SCREEN.PAGINATION.BUTTON.PREVIOUS",
-					bundle: .atURL(Bundle.module.bundleURL)
-				),
-				systemImage: "arrow.left",
-				direction: .previous
-			)
-			.frame(maxWidth: .infinity, alignment: .leading)
+		Group {
+			switch self.paginationStyle {
+			case .automatic:
+				ViewThatFits(in: .horizontal) {
+					self.paginationControls(displaysButtonTitles: true)
+					self.paginationControls(displaysButtonTitles: false)
+				}
 
-			self.pageIndicators
+			case .labeled:
+				self.paginationControls(displaysButtonTitles: true)
 
-			self.paginationButton(
-				title: LocalizedStringResource(
-					"RECAP.SCREEN.PAGINATION.BUTTON.NEXT",
-					bundle: .atURL(Bundle.module.bundleURL)
-				),
-				systemImage: "arrow.right",
-				direction: .next
-			)
-			.frame(maxWidth: .infinity, alignment: .trailing)
+			case .compact:
+				self.paginationControls(displaysButtonTitles: false)
+			}
 		}
 		.padding(.top, 24.0)
 		.padding(.horizontal, 32.0)
@@ -214,12 +206,17 @@ private extension RecapScreen {
         self.pageCount > 1
     }
 
-    var usesDefaultPaginationControls: Bool {
-        self.paginationStyle == .default && self.hasMultiplePages
+    var usesSystemPaginationControls: Bool {
+        self.paginationStyle == .automatic
+            && !self.automaticPaginationUsesButtons
+            && self.hasMultiplePages
     }
 
     var usesButtonPaginationControls: Bool {
-        self.paginationStyle == .buttons && self.hasMultiplePages
+        switch self.paginationStyle {
+        case .automatic: self.automaticPaginationUsesButtons && self.hasMultiplePages
+        case .labeled, .compact: self.hasMultiplePages
+        }
     }
 
     var showsDismissButton: Bool {
@@ -237,6 +234,14 @@ private extension RecapScreen {
 	var trailingPageIndex: Int {
 		self.pageCount - 1
 	}
+
+    var automaticPaginationUsesButtons: Bool {
+		#if os(macOS) || targetEnvironment(macCatalyst)
+        true
+		#else
+        false
+		#endif
+    }
 
     var derivedBackgroundStyle: AnyShapeStyle {
         if let backgroundStyle {
@@ -290,31 +295,63 @@ private extension RecapScreen {
 #endif
     }
 
+	func paginationControls(displaysButtonTitles: Bool) -> some View {
+		HStack(spacing: 16.0) {
+			self.paginationButton(
+				title: LocalizedStringResource(
+					"RECAP.SCREEN.PAGINATION.BUTTON.PREVIOUS",
+					bundle: .atURL(Bundle.module.bundleURL)
+				),
+				systemImage: "arrow.left",
+				direction: .previous,
+				showsTitle: displaysButtonTitles
+			)
+			.frame(maxWidth: .infinity, alignment: .leading)
+
+			self.pageIndicators
+
+			self.paginationButton(
+				title: LocalizedStringResource(
+					"RECAP.SCREEN.PAGINATION.BUTTON.NEXT",
+					bundle: .atURL(Bundle.module.bundleURL)
+				),
+				systemImage: "arrow.right",
+				direction: .next,
+				showsTitle: displaysButtonTitles
+			)
+			.frame(maxWidth: .infinity, alignment: .trailing)
+		}
+	}
+
 	@ViewBuilder
-    func paginationButton(title: LocalizedStringResource, systemImage: String, direction: PaginationDirection) -> some View {
+    func paginationButton(title: LocalizedStringResource, systemImage: String, direction: PaginationDirection, showsTitle: Bool) -> some View {
         let isEnabled = self.canPaginate(in: direction)
 
         Button(action: {
             self.paginate(in: direction)
         }, label: {
-            HStack(spacing: 8.0) {
-                if direction == .previous {
-                    Image(systemName: systemImage)
-                }
+			HStack(spacing: showsTitle ? 8.0 : 0.0) {
+				if direction == .previous {
+					Image(systemName: systemImage)
+				}
 
-                Text(title)
-                    .lineLimit(1)
+				if showsTitle {
+					Text(title)
+						.lineLimit(1)
+				}
 
-                if direction == .next {
-                    Image(systemName: systemImage)
-                }
-            }
+				if direction == .next {
+					Image(systemName: systemImage)
+				}
+			}
+			.fixedSize(horizontal: true, vertical: false)
             .font(.system(.title3, weight: .semibold))
             .contentShape(.rect)
             .opacity(isEnabled ? 1.0 : 0.35)
         })
         .buttonStyle(.plain)
         .disabled(!isEnabled)
+        .accessibilityLabel(title)
     }
 
     func paginate(in direction: PaginationDirection) {

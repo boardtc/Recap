@@ -17,7 +17,7 @@ struct DemoRecapScreen: View {
 				selected: Color.pink,
 				deselected: Color.gray
 			)
-			.recapScreenPaginationStyle(self.isMacCatalystEnvironment ? .buttons : .default)
+			.recapScreenPaginationStyle(self.isMacCatalystEnvironment ? .labeled : .automatic)
 			.recapScreenDismissButtonVisibility(self.isMacCatalystEnvironment ? .hidden : .visible)
 	}
 }

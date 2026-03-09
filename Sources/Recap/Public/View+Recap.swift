@@ -206,7 +206,7 @@ internal extension EnvironmentValues {
     }
 
     private struct PaginationStyleKey: EnvironmentKey {
-        static let defaultValue = RecapScreenPaginationStyle.default
+        static let defaultValue = RecapScreenPaginationStyle.automatic
     }
 
     // MARK: IconFillMode

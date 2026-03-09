@@ -128,12 +128,18 @@ RecapScreen(releases: .appReleases)
     .recapScreenDismissButtonStyle(Color.pink, Color.white)
     .recapScreenDismissButtonVisibility(.hidden)
     .recapScreenIconFillMode(.gradient)
-    .recapScreenPaginationStyle(.buttons)
+    .recapScreenPaginationStyle(.automatic)
     .recapScreenPageIndicatorColors(
         selected: Color.pink,
         deselected: Color.gray
     )
 ```
+
+Pagination styles:
+
+- `.automatic`: uses the system page control on iPhone and iPad, and adaptive previous/next buttons on Mac Catalyst
+- `.labeled`: always shows previous/next buttons with text labels
+- `.compact`: always shows previous/next buttons as icon-only controls
 
 RecapScreen also supports leading and trailing views:
 
