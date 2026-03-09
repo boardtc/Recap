@@ -28,7 +28,9 @@ public struct RecapScreen<LeadingView: View, TrailingView: View>: View {
     @Environment(\.recapScreenDeselectedPageIndicatorColor) private var deselectedPageIndicatorColor
     @Environment(\.recapScreenDismissButtonStyle) private var dismissButtonStyle
     @Environment(\.recapScreenDismissButtonTitle) private var dismissButtonTitle
+    @Environment(\.recapScreenDismissButtonVisibility) private var dismissButtonVisibility
     @Environment(\.recapScreenDismissAction) private var dismissAction
+    @Environment(\.recapScreenPaginationStyle) private var paginationStyle
 
     @State private var originalSelectedPageIndicatorColor: UIColor?
     @State private var originalDeselectedPageIndicatorColor: UIColor?
@@ -50,55 +52,39 @@ public struct RecapScreen<LeadingView: View, TrailingView: View>: View {
                 self.leadingView
                     .tag(self.tabIndex(from: .leadingView))
 
-                ForEach(self.displayedReleases) { release in
+                ForEach(Array(self.displayedReleases.enumerated()), id: \.element.id) { index, release in
                     ReleaseView(release: release)
                         .padding(.bottom, 32.0)
-                        .tag((self.tabIndex(from: .release(
-                            self.displayedReleases.firstIndex(of: release) ?? 0)
-                        )))
+                        .tag(self.releasePageIndex(for: index))
                 }
 
                 self.trailingView
                     .tag(self.tabIndex(from: .trailingView))
             }
-            .tabViewStyle(.page(indexDisplayMode: self.hasMultiplePages ? .always : .never))
+            .tabViewStyle(.page(indexDisplayMode: self.usesDefaultPaginationControls ? .always : .never))
             .background(self.derivedBackgroundStyle)
 
-            Button(action: {
-                dismissAction?() ?? dismiss()
-            }, label: {
-                HStack {
-                    Spacer(minLength: 0.0)
+            if self.showsFooter {
+                VStack(spacing: 0.0) {
+                    if self.usesButtonPaginationControls {
+                        self.paginationControls
+                    }
 
-                    Text(self.dismissButtonTitle)
-                        .font(.system(.title3, weight: .bold))
-                        .padding(8.0)
-                        .padding(.vertical, 4.0)
-                        .padding(.horizontal, 16.0)
-                        .foregroundStyle(dismissButtonStyle.foregroundStyle)
-
-                    Spacer(minLength: 0.0)
+                    if self.showsDismissButton {
+                        self.dismissButton
+                    }
                 }
-                .contentShape(.rect(cornerRadius: 16.0))
-            })
-			.buttonStyle(.borderless)
-            .frame(maxWidth: .infinity)
-            .background(self.dismissButtonStyle.backgroundStyle)
-            .versionSpecificClipShape()
-            .padding(.horizontal, 40.0)
-            .foregroundStyle(.primary)
-            .withBottomPaddingIfNoSafeArea()
-            .background(self.derivedBackgroundStyle)
-            .onAppear(perform: {
-                self.selectedIndex = self.tabIndex(from: self.startIndex)
-            })
-            .onAppear(perform: {
-                self.setupAppearanceChanges()
-            })
-            .onDisappear(perform: {
-                self.teardownAppearanceChanges()
-            })
+                .background(self.derivedBackgroundStyle)
+            }
         }
+        .onAppear(perform: {
+			self.selectedIndex = self.tabIndex(from: self.startIndex)
+
+            self.setupAppearanceChanges()
+        })
+        .onDisappear(perform: {
+            self.teardownAppearanceChanges()
+        })
     }
 }
 
@@ -131,15 +117,126 @@ public extension RecapScreen where LeadingView == EmptyView, TrailingView == Emp
 // MARK: Private
 
 private extension RecapScreen {
+	var paginationControls: some View {
+		HStack(spacing: 16.0) {
+			self.paginationButton(
+				title: LocalizedStringResource(
+					"RECAP.SCREEN.PAGINATION.BUTTON.PREVIOUS",
+					bundle: .atURL(Bundle.module.bundleURL)
+				),
+				systemImage: "arrow.left",
+				direction: .previous
+			)
+			.frame(maxWidth: .infinity, alignment: .leading)
+
+			self.pageIndicators
+
+			self.paginationButton(
+				title: LocalizedStringResource(
+					"RECAP.SCREEN.PAGINATION.BUTTON.NEXT",
+					bundle: .atURL(Bundle.module.bundleURL)
+				),
+				systemImage: "arrow.right",
+				direction: .next
+			)
+			.frame(maxWidth: .infinity, alignment: .trailing)
+		}
+		.padding(.top, 24.0)
+		.padding(.horizontal, 32.0)
+		.foregroundStyle(.primary)
+		.withBottomPaddingIfNoSafeArea(when: !self.showsDismissButton)
+	}
+
+	var pageIndicators: some View {
+		HStack(spacing: 10.0) {
+			ForEach(Array(0..<self.pageCount), id: \.self) { index in
+				Button(action: {
+					withAnimation {
+						self.selectedIndex = index
+					}
+				}, label: {
+					Circle()
+						.fill(index == self.selectedIndex ? self.selectedPageIndicatorColor : self.deselectedPageIndicatorColor)
+						.frame(width: 8.0, height: 8.0)
+				})
+				.buttonStyle(.plain)
+			}
+		}
+	}
+
+	var dismissButton: some View {
+		Button(action: {
+			dismissAction?() ?? dismiss()
+		}, label: {
+			HStack {
+				Spacer(minLength: 0.0)
+
+				Text(self.dismissButtonTitle)
+					.font(.system(.title3, weight: .bold))
+					.padding(8.0)
+					.padding(.vertical, 4.0)
+					.padding(.horizontal, 16.0)
+					.foregroundStyle(dismissButtonStyle.foregroundStyle)
+
+				Spacer(minLength: 0.0)
+			}
+			.contentShape(.rect(cornerRadius: 16.0))
+		})
+		.buttonStyle(.borderless)
+		.frame(maxWidth: .infinity)
+		.background(self.dismissButtonStyle.backgroundStyle)
+		.versionSpecificClipShape()
+		.padding(.horizontal, 40.0)
+		.padding(.top, self.usesButtonPaginationControls ? 16.0 : 0.0)
+		.foregroundStyle(.primary)
+		.withBottomPaddingIfNoSafeArea()
+	}
+
     var displayedReleases: [Release] {
         self.releases.reversed()
     }
 
-    var hasMultiplePages: Bool {
-        let hasLeading: Bool = (LeadingView.self != EmptyView.self)
-        let hasTrailing: Bool = (TrailingView.self != EmptyView.self)
-        return hasLeading || hasTrailing || self.releases.count > 1
+    var hasLeadingPage: Bool {
+        LeadingView.self != EmptyView.self
     }
+
+    var hasTrailingPage: Bool {
+        TrailingView.self != EmptyView.self
+    }
+
+    var pageCount: Int {
+        self.displayedReleases.count
+            + (self.hasLeadingPage ? 1 : 0)
+            + (self.hasTrailingPage ? 1 : 0)
+    }
+
+    var hasMultiplePages: Bool {
+        self.pageCount > 1
+    }
+
+    var usesDefaultPaginationControls: Bool {
+        self.paginationStyle == .default && self.hasMultiplePages
+    }
+
+    var usesButtonPaginationControls: Bool {
+        self.paginationStyle == .buttons && self.hasMultiplePages
+    }
+
+    var showsDismissButton: Bool {
+        self.dismissButtonVisibility == .visible
+    }
+
+    var showsFooter: Bool {
+        self.usesButtonPaginationControls || self.showsDismissButton
+    }
+
+	var leadingPageIndex: Int {
+		0
+	}
+
+	var trailingPageIndex: Int {
+		self.pageCount - 1
+	}
 
     var derivedBackgroundStyle: AnyShapeStyle {
         if let backgroundStyle {
@@ -148,6 +245,33 @@ private extension RecapScreen {
             AnyShapeStyle(self.colorScheme == .dark ? Color.black : Color.white)
         }
     }
+
+	func canPaginate(in direction: PaginationDirection) -> Bool {
+		switch direction {
+		case .previous: self.selectedIndex > 0
+		case .next: self.selectedIndex < (self.pageCount - 1)
+		}
+	}
+
+	func tabIndex(from startIndex: RecapScreenStartIndex) -> Int {
+		switch startIndex {
+		case .leadingView:
+			return 0
+
+		case .trailingView:
+			return max(self.trailingPageIndex, 0)
+
+		case .release(let index):
+			let clampedIndex = min(max(index, 0), max(self.displayedReleases.count - 1, 0))
+
+			return self.releasePageIndex(for: clampedIndex)
+		}
+	}
+
+
+	func releasePageIndex(for releaseIndex: Int) -> Int {
+		releaseIndex + (self.hasLeadingPage ? 1 : 0)
+	}
 
     func setupAppearanceChanges() {
 #if canImport(UIKit)
@@ -166,13 +290,50 @@ private extension RecapScreen {
 #endif
     }
 
-    func tabIndex(from startIndex: RecapScreenStartIndex) -> Int {
-        switch startIndex {
-        case .leadingView: 0
-        case .trailingView: self.releases.count + 1
-        case .release(let index): index + 1
+	@ViewBuilder
+    func paginationButton(title: LocalizedStringResource, systemImage: String, direction: PaginationDirection) -> some View {
+        let isEnabled = self.canPaginate(in: direction)
+
+        Button(action: {
+            self.paginate(in: direction)
+        }, label: {
+            HStack(spacing: 8.0) {
+                if direction == .previous {
+                    Image(systemName: systemImage)
+                }
+
+                Text(title)
+                    .lineLimit(1)
+
+                if direction == .next {
+                    Image(systemName: systemImage)
+                }
+            }
+            .font(.system(.title3, weight: .semibold))
+            .contentShape(.rect)
+            .opacity(isEnabled ? 1.0 : 0.35)
+        })
+        .buttonStyle(.plain)
+        .disabled(!isEnabled)
+    }
+
+    func paginate(in direction: PaginationDirection) {
+        guard self.canPaginate(in: direction) else { return }
+
+        withAnimation {
+            switch direction {
+            case .previous: self.selectedIndex -= 1
+            case .next: self.selectedIndex += 1
+            }
         }
     }
+}
+
+// MARK: PaginationDirection
+
+private enum PaginationDirection {
+    case previous
+    case next
 }
 
 // MARK: Safe Area Insets
@@ -188,9 +349,9 @@ private extension View {
 	}
 
     var hasSafeAreaForBottomPadding: Bool {
-#if os(macOS)
+		#if os(macOS) || targetEnvironment(macCatalyst)
         return false
-#else
+		#else
         if UIDevice.current.userInterfaceIdiom == .pad {
             // On iPad, we don't display fullscreen so the home bar isn't relevant.
             return false
@@ -200,12 +361,12 @@ private extension View {
             let mainWindow = (mainScene?.keyWindow ?? mainScene?.windows.first)
             return (mainWindow?.safeAreaInsets.bottom ?? 0.0) > 0.0
         }
-#endif
+		#endif
     }
 
     @ViewBuilder
-    func withBottomPaddingIfNoSafeArea() -> some View {
-        if hasSafeAreaForBottomPadding {
+    func withBottomPaddingIfNoSafeArea(when shouldApply: Bool = true) -> some View {
+        if !shouldApply || hasSafeAreaForBottomPadding {
             self
         } else {
             self.padding(.bottom, 24.0)

@@ -16,7 +16,7 @@ struct DemoApp: App {
 
 		#if targetEnvironment(macCatalyst)
         WindowGroup(id: DemoWindow.recap.id, for: DemoWindow.self) { _ in
-            DemoRecapScreen(isRunningInMacCatalystEnvironment: true)
+            DemoRecapScreen()
         }
 		.defaultSize(width: 800.0, height: 800.0)
         .windowResizability(.contentMinSize)

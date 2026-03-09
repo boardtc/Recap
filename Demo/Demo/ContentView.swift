@@ -2,52 +2,52 @@ import Recap
 import SwiftUI
 
 struct ContentView: View {
-    @Environment(\.openWindow) private var openWindow
-    @State private var isPresentingRecapScreen = false
+	@Environment(\.isMacCatalystEnvironment) private var isMacCatalystEnvironment
+	@Environment(\.openWindow) private var openWindow
 
-    var body: some View {
-        VStack {
-            self.showReleasesButton
-        }
-        .task({
-            try? await Task.sleep(for: .seconds(0.5))
-            self.isPresentingRecapScreen = true
-        })
-        .sheet(isPresented: $isPresentingRecapScreen, content: {
-            self.recapScreen
-        })
-    }
+	@State private var isPresentingRecapScreen = false
 
+	var body: some View {
+		VStack {
+			self.showReleasesButton
+		}
+		.sheet(isPresented: $isPresentingRecapScreen, content: {
+			self.recapScreen
+		})
+		.task({
+			guard !self.isMacCatalystEnvironment else { return }
+
+			try? await Task.sleep(for: .seconds(0.5))
+			self.presentRecapScreen()
+		})
+	}
+}
+
+private extension ContentView {
+	@ViewBuilder
     var showReleasesButton: some View {
-        Button(action: {
-            self.isPresentingRecapScreen = true
-        }, label: {
-            Label("Show What's New", systemImage: "sparkles")
-        })
+		Button(action: {
+			self.presentRecapScreen()
+		}, label: {
+			Label("Show What's New", systemImage: "sparkles")
+				.frame(maxWidth: .infinity)
+		})
+		.padding(.vertical, self.isMacCatalystEnvironment ? 128.0 : 0.0)
     }
 
-    // Optionally you can add a `leadingView` and `trailingView` to your RecapScreen.
-    // If you do, you may also wish to specify the start index of your RecapScreen
-    // by using the `.recapScreenStartIndex()` modifier, which takes three parameters:
-    // .leadingView, .trailingView, and `.release(Int)`, specifying the index of the release you wish to display.
     var recapScreen: some View {
-        RecapScreen(releases: .releases)
-            .recapScreenDismissButtonStyle(Color.pink, Color.white)
-            .recapScreenIconFillMode(.gradient)
-            .recapScreenTitleStyle(.foreground)
-            .recapScreenPageIndicatorColors(
-                selected: Color.pink,
-                deselected: Color.gray
-            )
+        DemoRecapScreen()
     }
 }
 
-public extension [Release] {
-    static var releases: [Release] {
-        ReleasesParser(fileName: "Releases").releases
-    }
-}
+// MARK: ContentView
 
-#Preview {
-    ContentView()
+private extension ContentView {
+	func presentRecapScreen() {
+		if self.isMacCatalystEnvironment {
+			self.openWindow(id: DemoWindow.recap.id, value: DemoWindow.recap)
+		} else {
+			self.isPresentingRecapScreen = true
+		}
+	}
 }
