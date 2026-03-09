@@ -9,16 +9,21 @@ struct DemoRecapScreen: View {
 		// If you do, you may also wish to specify the start index of your RecapScreen
 		// by using the `.recapScreenStartIndex()` modifier, which takes three parameters:
 		// .leadingView, .trailingView, and `.release(Int)`, specifying the index of the release you wish to display.
-		RecapScreen(releases: .releases)
-			.recapScreenDismissButtonStyle(Color.pink, Color.white)
-			.recapScreenIconFillMode(.gradient)
-			.recapScreenTitleStyle(.foreground)
-			.recapScreenPageIndicatorColors(
-				selected: Color.pink,
-				deselected: Color.gray
-			)
-			.recapScreenPaginationStyle(self.isMacCatalystEnvironment ? .labeled : .automatic)
-			.recapScreenDismissButtonVisibility(self.isMacCatalystEnvironment ? .hidden : .visible)
+		RecapScreen(releases: .releases, trailingView: {
+			Text("Fin")
+				.foregroundStyle(Color.teal)
+				.font(.title)
+				.fontWeight(.semibold)
+		})
+		.recapScreenDismissButtonStyle(Color.pink, Color.white)
+		.recapScreenIconFillMode(.gradient)
+		.recapScreenTitleStyle(.foreground)
+		.recapScreenPageIndicatorColors(
+			selected: Color.pink,
+			deselected: Color.gray
+		)
+		.recapScreenPaginationStyle(self.isMacCatalystEnvironment ? .labeled : .automatic)
+		.recapScreenDismissButtonVisibility(self.isMacCatalystEnvironment ? .hidden : .visible)
 	}
 }
 

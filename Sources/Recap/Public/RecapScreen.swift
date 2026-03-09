@@ -49,8 +49,10 @@ public struct RecapScreen<LeadingView: View, TrailingView: View>: View {
     public var body: some View {
         VStack(spacing: 0.0) {
             TabView(selection: $selectedIndex) {
-                self.leadingView
-                    .tag(self.tabIndex(from: .leadingView))
+                if self.hasLeadingPage {
+                    self.leadingView
+                        .tag(self.leadingPageIndex)
+                }
 
                 ForEach(Array(self.displayedReleases.enumerated()), id: \.element.id) { index, release in
                     ReleaseView(release: release)
@@ -58,8 +60,10 @@ public struct RecapScreen<LeadingView: View, TrailingView: View>: View {
                         .tag(self.releasePageIndex(for: index))
                 }
 
-                self.trailingView
-                    .tag(self.tabIndex(from: .trailingView))
+                if self.hasTrailingPage {
+                    self.trailingView
+                        .tag(self.trailingPageIndex)
+                }
             }
             .tabViewStyle(.page(indexDisplayMode: self.usesSystemPaginationControls ? .always : .never))
             .background(self.derivedBackgroundStyle)
@@ -141,7 +145,7 @@ private extension RecapScreen {
 
 	var pageIndicators: some View {
 		HStack(spacing: 10.0) {
-			ForEach(Array(0..<self.pageCount), id: \.self) { index in
+			ForEach(Array(0..<self.totalPageCount), id: \.self) { index in
 				Button(action: {
 					withAnimation {
 						self.selectedIndex = index
@@ -196,14 +200,22 @@ private extension RecapScreen {
         TrailingView.self != EmptyView.self
     }
 
-    var pageCount: Int {
-        self.displayedReleases.count
-            + (self.hasLeadingPage ? 1 : 0)
-            + (self.hasTrailingPage ? 1 : 0)
+    var leadingPageCount: Int {
+        self.hasLeadingPage ? 1 : 0
+    }
+
+    var trailingPageCount: Int {
+        self.hasTrailingPage ? 1 : 0
+    }
+
+    var totalPageCount: Int {
+        self.leadingPageCount
+            + self.displayedReleases.count
+            + self.trailingPageCount
     }
 
     var hasMultiplePages: Bool {
-        self.pageCount > 1
+        self.totalPageCount > 1
     }
 
     var usesSystemPaginationControls: Bool {
@@ -232,8 +244,12 @@ private extension RecapScreen {
 	}
 
 	var trailingPageIndex: Int {
-		self.pageCount - 1
+		self.leadingPageCount + self.displayedReleases.count
 	}
+
+    var lastPageIndex: Int {
+        max(self.totalPageCount - 1, 0)
+    }
 
     var automaticPaginationUsesButtons: Bool {
 		#if os(macOS) || targetEnvironment(macCatalyst)
@@ -254,28 +270,35 @@ private extension RecapScreen {
 	func canPaginate(in direction: PaginationDirection) -> Bool {
 		switch direction {
 		case .previous: self.selectedIndex > 0
-		case .next: self.selectedIndex < (self.pageCount - 1)
+		case .next: self.selectedIndex < self.lastPageIndex
 		}
 	}
 
 	func tabIndex(from startIndex: RecapScreenStartIndex) -> Int {
 		switch startIndex {
 		case .leadingView:
-			return 0
+			return self.leadingPageIndex
 
 		case .trailingView:
-			return max(self.trailingPageIndex, 0)
+            if self.hasTrailingPage {
+                return self.trailingPageIndex
+            } else {
+                return self.leadingPageIndex
+            }
 
 		case .release(let index):
-			let clampedIndex = min(max(index, 0), max(self.displayedReleases.count - 1, 0))
+            guard !self.displayedReleases.isEmpty else {
+                return self.leadingPageIndex
+            }
+
+			let clampedIndex = min(max(index, 0), self.displayedReleases.count - 1)
 
 			return self.releasePageIndex(for: clampedIndex)
 		}
 	}
 
-
 	func releasePageIndex(for releaseIndex: Int) -> Int {
-		releaseIndex + (self.hasLeadingPage ? 1 : 0)
+		self.leadingPageCount + releaseIndex
 	}
 
     func setupAppearanceChanges() {
