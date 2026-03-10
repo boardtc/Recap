@@ -229,7 +229,7 @@ Once you have your Swift package set up, adding Recap as a dependency is as easy
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/mergesort/Recap.git", .upToNextMajor(from: "1.0.0"))
+    .package(url: "https://github.com/mergesort/Recap/", from: Version(2, 0, 0))
 ]
 ```
 
